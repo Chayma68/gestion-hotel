@@ -1,0 +1,91 @@
+package com.hotel.model;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+
+/**
+ * Represents a reservation in the hotel.  A reservation ties together a
+ * client and a room for a period of time defined by check‑in and
+ * check‑out dates.  The reservation may or may not have been
+ * confirmed by hotel staff.  This class is serialisable to ease
+ * transport over RMI.
+ */
+public class Reservation implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private int id;
+    private Client client;
+    private Room room;
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+    private boolean confirmed;
+
+    public Reservation(int id, Client client, Room room, LocalDate checkInDate, LocalDate checkOutDate) {
+        this.id = id;
+        this.client = client;
+        this.room = room;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.confirmed = false;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public void setCheckInDate(LocalDate checkInDate) {
+        this.checkInDate = checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public void setCheckOutDate(LocalDate checkOutDate) {
+        this.checkOutDate = checkOutDate;
+    }
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
+
+    @Override
+    public String toString() {
+        return "Reservation{" +
+                "id=" + id +
+                ", client=" + (client != null ? client.getName() : null) +
+                ", room=" + (room != null ? room.getId() : 0) +
+                ", checkInDate=" + checkInDate +
+                ", checkOutDate=" + checkOutDate +
+                ", confirmed=" + confirmed +
+                '}';
+    }
+}
