@@ -8,39 +8,57 @@ import com.hotel.service.rmi.HotelService;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Main application window for hotel employees.  It contains a tabbed
- * interface exposing panels for room, client and reservation
- * management, payment processing and reporting.  The window title
- * includes the logged in employee’s username for clarity.
- */
 public class EmployeeUI extends JFrame {
+
     private final HotelService hotelService;
     private final PaymentService paymentService;
     private final ReportService reportService;
-    private final User user;
+    private final User employee;
 
-    public EmployeeUI(HotelService hotelService, PaymentService paymentService, ReportService reportService, User user) {
+    public EmployeeUI(HotelService hotelService,
+                      PaymentService paymentService,
+                      ReportService reportService,
+                      User employee) {
         this.hotelService = hotelService;
         this.paymentService = paymentService;
         this.reportService = reportService;
-        this.user = user;
-        initialiseUI();
+        this.employee = employee;
+
+        initUI();
     }
 
-    private void initialiseUI() {
-        setTitle("Hotel Management - Employee: " + user.getUsername());
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    private void initUI() {
+        setTitle("Gestion d'hôtel - Espace employé");
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Rooms", new RoomManagementPanel(hotelService));
-        tabbedPane.addTab("Clients", new ClientManagementPanel(hotelService));
-        tabbedPane.addTab("Reservations", new ReservationManagementPanel(hotelService));
-        tabbedPane.addTab("Payments", new PaymentPanel(hotelService, paymentService));
-        tabbedPane.addTab("Reports", new ReportPanel(hotelService, reportService));
+        // ----- Barre supérieure -----
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        getContentPane().add(tabbedPane, BorderLayout.CENTER);
+        JLabel titleLabel = new JLabel("Espace employé - Gestion d'hôtel");
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 18f));
+
+        JLabel userLabel = new JLabel("Connecté : " + employee.getUsername());
+        userLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        topBar.add(titleLabel, BorderLayout.WEST);
+        topBar.add(userLabel, BorderLayout.EAST);
+
+        // ----- Onglets -----
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        tabs.addTab("Chambres", new RoomManagementPanel(hotelService));
+        tabs.addTab("Clients", new ClientManagementPanel(hotelService));
+        tabs.addTab("Réservations", new ReservationManagementPanel(hotelService));
+        tabs.addTab("Paiements", new PaymentPanel(hotelService, paymentService));
+        tabs.addTab("Rapports", new ReportPanel(hotelService, reportService));
+
+        // ----- Layout principal -----
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(topBar, BorderLayout.NORTH);
+        getContentPane().add(tabs, BorderLayout.CENTER);
     }
 }

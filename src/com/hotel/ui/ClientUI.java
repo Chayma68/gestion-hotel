@@ -1,9 +1,6 @@
 package com.hotel.ui;
 
-import com.hotel.model.Client;
-import com.hotel.model.Reservation;
-import com.hotel.model.Room;
-import com.hotel.model.User;
+import com.hotel.model.*;
 import com.hotel.service.ReportService;
 import com.hotel.service.ejb.PaymentService;
 import com.hotel.service.rmi.HotelService;

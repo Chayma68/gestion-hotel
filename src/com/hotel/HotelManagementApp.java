@@ -21,8 +21,16 @@ import java.util.List;
  * sample users and displays the login window.  The user’s time zone
  * and locale are not explicitly set; Swing defaults are used.
  */
+
 public class HotelManagementApp {
     public static void main(String[] args) {
+
+        try {
+            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        } catch (Exception e) {
+            // Si Nimbus n'est pas dispo, on ignore et on garde le look par défaut
+        }
+
         // Instantiate services
         try {
             HotelService hotelService = new HotelServiceImpl();
@@ -31,9 +39,8 @@ public class HotelManagementApp {
 
             // Create sample users
             List<User> users = new ArrayList<>();
-            // Add an employee
             users.add(new User(1, "admin", "admin", User.Role.EMPLOYEE));
-            // Link clients to user accounts
+
             List<Client> clients = hotelService.getAllClients();
             int userIdCounter = 2;
             for (Client c : clients) {

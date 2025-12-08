@@ -4,7 +4,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,50 +11,37 @@ import com.hotel.model.Client;
 import com.hotel.model.Reservation;
 import com.hotel.model.Room;
 
-/**
- * Concrete implementation of {@link HotelService}.  This class
- * maintains simple in‑memory lists of rooms, clients and
- * reservations.  It does not persist data to any external storage and
- * is intended purely to illustrate the distribution of services using
- * RMI.  All methods are synchronised so that concurrent access from
- * multiple clients will be thread safe.
- */
 public class HotelServiceImpl extends UnicastRemoteObject implements HotelService {
     private static final long serialVersionUID = 1L;
 
-    private final List<Room> rooms;
-    private final List<Client> clients;
-    private final List<Reservation> reservations;
+    //  On initialise directement les listes, plus besoin de les réassigner dans le constructeur
+    private final List<Client> clients = new ArrayList<>();
+    private final List<Reservation> reservations = new ArrayList<>();
+    private final List<Room> rooms = new ArrayList<>();
+
     private int nextRoomId = 1;
     private int nextClientId = 1;
     private int nextReservationId = 1;
 
     public HotelServiceImpl() throws RemoteException {
         super();
-        this.rooms = new ArrayList<>();
-        this.clients = new ArrayList<>();
-        this.reservations = new ArrayList<>();
         initialiseSampleData();
     }
 
-    /**
-     * Populates the service with a handful of rooms and clients so that
-     * the application can be demonstrated without requiring the user to
-     * create everything from scratch.  In a real system this method
-     * would not exist and data would be loaded from a persistent
-     * storage mechanism.
-     */
+
     private void initialiseSampleData() {
-        // add some rooms
-        rooms.add(new Room(nextRoomId++, "Single", 50.0, true));
-        rooms.add(new Room(nextRoomId++, "Double", 80.0, true));
-        rooms.add(new Room(nextRoomId++, "Suite", 120.0, true));
+        //  On peut maintenant donner des numéros de chambre
+        rooms.add(new Room(nextRoomId++, "101", "Single", 50.0, true));
+        rooms.add(new Room(nextRoomId++, "102", "Double", 80.0, true));
+        rooms.add(new Room(nextRoomId++, "201", "Suite", 120.0, true));
+
         // add some clients
         clients.add(new Client(nextClientId++, "Alice", "1234 Avenue Street", "alice@example.com"));
         clients.add(new Client(nextClientId++, "Bob", "5678 Boulevard", "bob@example.com"));
     }
 
-    // Room operations
+    // -------------------- Room operations --------------------
+
     @Override
     public synchronized List<Room> getAllRooms() {
         return new ArrayList<>(rooms);
@@ -63,7 +49,9 @@ public class HotelServiceImpl extends UnicastRemoteObject implements HotelServic
 
     @Override
     public synchronized List<Room> getAvailableRooms() {
-        return rooms.stream().filter(Room::isAvailable).collect(Collectors.toList());
+        return rooms.stream()
+                .filter(Room::isAvailable)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -87,7 +75,8 @@ public class HotelServiceImpl extends UnicastRemoteObject implements HotelServic
         rooms.removeIf(r -> r.getId() == id);
     }
 
-    // Client operations
+    // -------------------- Client operations --------------------
+
     @Override
     public synchronized List<Client> getAllClients() {
         return new ArrayList<>(clients);
@@ -107,15 +96,17 @@ public class HotelServiceImpl extends UnicastRemoteObject implements HotelServic
                 .orElse(null);
     }
 
-    // Reservation operations
+    // -------------------- Reservation operations --------------------
+
     @Override
     public synchronized List<Reservation> getAllReservations() {
         return new ArrayList<>(reservations);
     }
 
     @Override
-    public synchronized Reservation makeReservation(Client client, Room room, LocalDate checkIn, LocalDate checkOut) {
-        // simple availability check: ensure room is available and not overlapping with existing reservations
+    public synchronized Reservation makeReservation(Client client, Room room,
+                                                    LocalDate checkIn, LocalDate checkOut) {
+        // simple availability check: ensure room is available
         if (!room.isAvailable()) {
             return null;
         }
@@ -123,7 +114,6 @@ public class HotelServiceImpl extends UnicastRemoteObject implements HotelServic
         room.setAvailable(false);
         Reservation res = new Reservation(nextReservationId++, client, room, checkIn, checkOut);
         reservations.add(res);
-        client.addReservation(res);
         return res;
     }
 
@@ -136,7 +126,6 @@ public class HotelServiceImpl extends UnicastRemoteObject implements HotelServic
         if (res != null) {
             res.getRoom().setAvailable(true);
             reservations.remove(res);
-            res.getClient().getReservations().remove(res);
         }
     }
 

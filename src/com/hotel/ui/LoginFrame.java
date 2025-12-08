@@ -8,17 +8,10 @@ import com.hotel.service.rmi.HotelService;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * Simple login window that prompts the user for a username and
- * password.  Successful authentication opens either the employee or
- * client interface depending on the user’s role.  The frame
- * references the hotel services and payment services which are
- * injected via the constructor.
- */
 public class LoginFrame extends JFrame {
+
     private final HotelService hotelService;
     private final PaymentService paymentService;
     private final ReportService reportService;
@@ -28,102 +21,117 @@ public class LoginFrame extends JFrame {
     private JPasswordField passwordField;
     private JLabel messageLabel;
 
-    public LoginFrame(HotelService hotelService, PaymentService paymentService, ReportService reportService, List<User> users) {
+    public LoginFrame(HotelService hotelService,
+                      PaymentService paymentService,
+                      ReportService reportService,
+                      List<User> users) {
         this.hotelService = hotelService;
         this.paymentService = paymentService;
         this.reportService = reportService;
         this.users = users;
-        initialiseUI();
+
+        initUI();
     }
 
-    /**
-     * Configures the swing components and layout for the login form.
-     */
-    private void initialiseUI() {
-        setTitle("Hotel Management - Login");
+    private void initUI() {
+        setTitle("Gestion d'hôtel - Connexion");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 200);
-        setLocationRelativeTo(null);
+        setSize(420, 320);
+        setLocationRelativeTo(null);  // centre la fenêtre
+        setResizable(false);
 
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        panel.setLayout(new GridBagLayout());
+        // ----- Panel principal -----
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // ----- En-tête -----
+        JLabel titleLabel = new JLabel("Système de gestion d'hôtel", SwingConstants.CENTER);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 18f));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+
+        // ----- Formulaire -----
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel userLabel = new JLabel("Username:");
+        JLabel userLabel = new JLabel("Nom d'utilisateur :");
+        JLabel passLabel = new JLabel("Mot de passe :");
+
+        usernameField = new JTextField(18);
+        passwordField = new JPasswordField(18);
+
         gbc.gridx = 0;
         gbc.gridy = 0;
-        panel.add(userLabel, gbc);
+        formPanel.add(userLabel, gbc);
 
-        usernameField = new JTextField(20);
         gbc.gridx = 1;
-        gbc.gridy = 0;
-        panel.add(usernameField, gbc);
+        formPanel.add(usernameField, gbc);
 
-        JLabel passLabel = new JLabel("Password:");
         gbc.gridx = 0;
         gbc.gridy = 1;
-        panel.add(passLabel, gbc);
+        formPanel.add(passLabel, gbc);
 
-        passwordField = new JPasswordField(20);
         gbc.gridx = 1;
-        gbc.gridy = 1;
-        panel.add(passwordField, gbc);
+        formPanel.add(passwordField, gbc);
 
-        JButton loginButton = new JButton("Login");
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.EAST;
-        panel.add(loginButton, gbc);
+        mainPanel.add(formPanel, BorderLayout.CENTER);
 
-        messageLabel = new JLabel();
+        // ----- Zone bas : message + boutons -----
+        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+
+        messageLabel = new JLabel(" ", SwingConstants.CENTER);
         messageLabel.setForeground(Color.RED);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        panel.add(messageLabel, gbc);
+        bottomPanel.add(messageLabel, BorderLayout.NORTH);
 
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleLogin();
+        JButton loginButton = new JButton("Se connecter");
+        JButton exitButton = new JButton("Quitter");
+
+        loginButton.addActionListener(this::onLogin);
+        exitButton.addActionListener(e -> System.exit(0));
+
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.add(loginButton);
+        buttonsPanel.add(exitButton);
+
+        bottomPanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        setContentPane(mainPanel);
+    }
+
+    private void onLogin(ActionEvent e) {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if (username.isEmpty() || password.isEmpty()) {
+            messageLabel.setText("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        User found = users.stream()
+                .filter(u -> u.getUsername().equalsIgnoreCase(username)
+                        && u.getPassword().equals(password))
+                .findFirst()
+                .orElse(null);
+
+        if (found == null) {
+            messageLabel.setText("Identifiants incorrects.");
+            return;
+        }
+
+        // Connexion réussie
+        SwingUtilities.invokeLater(() -> {
+            if (found.getRole() == User.Role.EMPLOYEE) {
+                new EmployeeUI(hotelService, paymentService, reportService, found).setVisible(true);
+            } else {
+                new ClientUI(hotelService, paymentService, reportService, found).setVisible(true);
             }
         });
 
-        getContentPane().add(panel);
-    }
-
-    /**
-     * Validates the entered username and password against the list of
-     * known users.  On success opens the appropriate main window and
-     * disposes of the login frame.  On failure displays an error.
-     */
-    private void handleLogin() {
-        String username = usernameField.getText().trim();
-        String password = new String(passwordField.getPassword());
-        if (username.isEmpty() || password.isEmpty()) {
-            messageLabel.setText("Please enter username and password.");
-            return;
-        }
-        for (User user : users) {
-            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
-                // Successful login
-                SwingUtilities.invokeLater(() -> {
-                    if (user.getRole() == User.Role.EMPLOYEE) {
-                        EmployeeUI ui = new EmployeeUI(hotelService, paymentService, reportService, user);
-                        ui.setVisible(true);
-                    } else {
-                        ClientUI ui = new ClientUI(hotelService, paymentService, reportService, user);
-                        ui.setVisible(true);
-                    }
-                    dispose();
-                });
-                return;
-            }
-        }
-        messageLabel.setText("Invalid credentials. Please try again.");
+        dispose();
     }
 }
