@@ -3,13 +3,7 @@ package com.hotel.model;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-/**
- * Represents a payment made by a client for a reservation.  The
- * payment records the associated reservation, the amount paid and the
- * date.  Payments can be marked as paid to indicate whether the
- * transaction has been completed.  This class is serialisable for
- * transport across remote interfaces.
- */
+
 public class Payment implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -27,6 +21,10 @@ public class Payment implements Serializable {
         this.amount = amount;
         this.date = date;
         this.paid = paid;
+    }
+
+    public Payment() {
+
     }
 
     public int getId() {

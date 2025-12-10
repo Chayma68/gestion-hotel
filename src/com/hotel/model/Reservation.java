@@ -3,13 +3,7 @@ package com.hotel.model;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-/**
- * Represents a reservation in the hotel.  A reservation ties together a
- * client and a room for a period of time defined by check‑in and
- * check‑out dates.  The reservation may or may not have been
- * confirmed by hotel staff.  This class is serialisable to ease
- * transport over RMI.
- */
+
 public class Reservation implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -27,6 +21,10 @@ public class Reservation implements Serializable {
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.confirmed = false;
+    }
+
+    public Reservation() {
+
     }
 
     public int getId() {

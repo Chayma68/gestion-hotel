@@ -1,141 +1,140 @@
 package com.hotel.service.rmi;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.hotel.db.ClientDao;
+import com.hotel.db.ClientDaoImpl;
+import com.hotel.db.ReservationDao;
+import com.hotel.db.ReservationDaoImpl;
+import com.hotel.db.RoomDao;
+import com.hotel.db.RoomDaoImpl;
 import com.hotel.model.Client;
 import com.hotel.model.Reservation;
 import com.hotel.model.Room;
 
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.time.LocalDate;
+import java.util.List;
+
 public class HotelServiceImpl extends UnicastRemoteObject implements HotelService {
     private static final long serialVersionUID = 1L;
 
-    //  On initialise directement les listes, plus besoin de les réassigner dans le constructeur
-    private final List<Client> clients = new ArrayList<>();
-    private final List<Reservation> reservations = new ArrayList<>();
-    private final List<Room> rooms = new ArrayList<>();
-
-    private int nextRoomId = 1;
-    private int nextClientId = 1;
-    private int nextReservationId = 1;
+    private final ClientDao clientDao = new ClientDaoImpl();
+    private final RoomDao roomDao = new RoomDaoImpl();
+    private final ReservationDao reservationDao = new ReservationDaoImpl();
 
     public HotelServiceImpl() throws RemoteException {
         super();
         initialiseSampleData();
     }
 
-
     private void initialiseSampleData() {
-        //  On peut maintenant donner des numéros de chambre
-        rooms.add(new Room(nextRoomId++, "101", "Single", 50.0, true));
-        rooms.add(new Room(nextRoomId++, "102", "Double", 80.0, true));
-        rooms.add(new Room(nextRoomId++, "201", "Suite", 120.0, true));
+        // Chambres
+        if (roomDao.getAllRooms().isEmpty()) {
+            roomDao.addRoom(new Room(0, "101", "Single", 50.0, true));
+            roomDao.addRoom(new Room(0, "102", "Double", 80.0, true));
+            roomDao.addRoom(new Room(0, "201", "Suite", 120.0, true));
+        }
 
-        // add some clients
-        clients.add(new Client(nextClientId++, "Alice", "1234 Avenue Street", "alice@example.com"));
-        clients.add(new Client(nextClientId++, "Bob", "5678 Boulevard", "bob@example.com"));
+        // Clients
+        if (clientDao.findAll().isEmpty()) {
+            clientDao.add(new Client(0, "Alice", "1234 Avenue Street", "alice@example.com"));
+            clientDao.add(new Client(0, "Bob", "5678 Boulevard", "bob@example.com"));
+        }
     }
 
     // -------------------- Room operations --------------------
 
     @Override
     public synchronized List<Room> getAllRooms() {
-        return new ArrayList<>(rooms);
+        return roomDao.getAllRooms();
     }
 
     @Override
     public synchronized List<Room> getAvailableRooms() {
-        return rooms.stream()
-                .filter(Room::isAvailable)
-                .collect(Collectors.toList());
+        return roomDao.getAvailableRooms();
     }
 
     @Override
     public synchronized void addRoom(Room room) {
-        room.setId(nextRoomId++);
-        rooms.add(room);
+        roomDao.addRoom(room);
     }
 
     @Override
     public synchronized void updateRoom(Room room) {
-        for (int i = 0; i < rooms.size(); i++) {
-            if (rooms.get(i).getId() == room.getId()) {
-                rooms.set(i, room);
-                return;
-            }
-        }
+        roomDao.updateRoom(room);
     }
 
     @Override
     public synchronized void deleteRoom(int id) {
-        rooms.removeIf(r -> r.getId() == id);
+        roomDao.deleteRoom(id);
     }
 
     // -------------------- Client operations --------------------
 
     @Override
     public synchronized List<Client> getAllClients() {
-        return new ArrayList<>(clients);
+        return clientDao.findAll();
     }
 
     @Override
     public synchronized void addClient(Client client) {
-        client.setId(nextClientId++);
-        clients.add(client);
+        clientDao.add(client);
     }
 
     @Override
     public synchronized Client findClientByName(String name) {
-        return clients.stream()
-                .filter(c -> c.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(null);
+        return clientDao.findByName(name);
     }
 
     // -------------------- Reservation operations --------------------
 
     @Override
     public synchronized List<Reservation> getAllReservations() {
-        return new ArrayList<>(reservations);
+        return reservationDao.findAll();
     }
 
     @Override
-    public synchronized Reservation makeReservation(Client client, Room room,
-                                                    LocalDate checkIn, LocalDate checkOut) {
-        // simple availability check: ensure room is available
-        if (!room.isAvailable()) {
+    public synchronized Reservation makeReservation(Client client,
+                                                    Room room,
+                                                    LocalDate checkIn,
+                                                    LocalDate checkOut) {
+        // Recharger la chambre depuis la BD
+        Room managedRoom = roomDao.getRoomById(room.getId());
+        if (managedRoom == null || !managedRoom.isAvailable()) {
             return null;
         }
-        // mark room as unavailable during the reservation period
-        room.setAvailable(false);
-        Reservation res = new Reservation(nextReservationId++, client, room, checkIn, checkOut);
-        reservations.add(res);
-        return res;
+
+        // Marquer la chambre indisponible et sauvegarder
+        managedRoom.setAvailable(false);
+        roomDao.updateRoom(managedRoom);
+
+        Reservation reservation = new Reservation();
+        reservation.setClient(client);
+        reservation.setRoom(managedRoom);
+        reservation.setCheckInDate(checkIn);
+        reservation.setCheckOutDate(checkOut);
+        reservation.setConfirmed(false);
+
+        return reservationDao.save(reservation);
     }
 
     @Override
     public synchronized void cancelReservation(int reservationId) {
-        Reservation res = reservations.stream()
-                .filter(r -> r.getId() == reservationId)
-                .findFirst()
-                .orElse(null);
+        Reservation res = reservationDao.findById(reservationId);
         if (res != null) {
-            res.getRoom().setAvailable(true);
-            reservations.remove(res);
+            Room room = res.getRoom();
+            room.setAvailable(true);
+            roomDao.updateRoom(room);
+            reservationDao.delete(reservationId);
         }
     }
 
     @Override
     public synchronized void confirmReservation(int reservationId) {
-        for (Reservation res : reservations) {
-            if (res.getId() == reservationId) {
-                res.setConfirmed(true);
-                break;
-            }
+        Reservation res = reservationDao.findById(reservationId);
+        if (res != null) {
+            res.setConfirmed(true);
+            reservationDao.update(res);
         }
     }
 }

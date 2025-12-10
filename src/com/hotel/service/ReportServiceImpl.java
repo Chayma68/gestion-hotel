@@ -9,14 +9,6 @@ import com.hotel.service.rmi.HotelService;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Implementation of {@link ReportService} that composes a
- * {@link HotelService} and a {@link PaymentService} to derive
- * summarised statistics.  Exceptions thrown by the underlying
- * {@code HotelService} are wrapped into RuntimeExceptions since
- * report generation occurs locally within the UI layer in this
- * example.
- */
 public class ReportServiceImpl implements ReportService {
     private final HotelService hotelService;
     private final PaymentService paymentService;

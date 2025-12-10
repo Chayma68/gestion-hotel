@@ -1,6 +1,7 @@
 package com.hotel.service.ejb;
 
-import com.hotel.model.Client;
+import com.hotel.db.PaymentDao;
+import com.hotel.db.PaymentDaoImpl;
 import com.hotel.model.Invoice;
 import com.hotel.model.Payment;
 import com.hotel.model.Reservation;
@@ -9,24 +10,17 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Simple implementation of {@link PaymentService} that stores
- * payments in memory.  In a real EJB deployment this class would be
- * annotated with {@code @Stateless} and rely on container managed
- * services for persistence, transactions and security.  Here it
- * functions as a plain Java class to keep the example self contained.
- */
 public class PaymentServiceImpl implements PaymentService {
-    private final List<Payment> payments;
-    private final List<Invoice> invoices;
-    private int nextPaymentId = 1;
+
+    // ✅ DAO pour les paiements (MySQL)
+    private final PaymentDao paymentDao = new PaymentDaoImpl();
+
+    // ✅ On garde les factures en mémoire (tu pourras les passer en DAO plus tard)
+    private final List<Invoice> invoices = new ArrayList<>();
     private int nextInvoiceId = 1;
 
     public PaymentServiceImpl() {
-        this.payments = new ArrayList<>();
-        this.invoices = new ArrayList<>();
     }
 
     @Override
@@ -34,8 +28,21 @@ public class PaymentServiceImpl implements PaymentService {
         if (reservation == null) {
             throw new IllegalArgumentException("Reservation cannot be null");
         }
-        Payment payment = new Payment(nextPaymentId++, reservation.getClient(), reservation, amount, LocalDate.now(), true);
-        payments.add(payment);
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+
+        // On crée l'objet Payment (sans id, il sera généré par la BD)
+        Payment payment = new Payment();
+        payment.setClient(reservation.getClient());
+        payment.setReservation(reservation);
+        payment.setAmount(amount);
+        payment.setDate(LocalDate.now());
+        payment.setPaid(true);
+
+        // ✅ Persistance via DAO
+        paymentDao.save(payment);
+
         return payment;
     }
 
@@ -44,11 +51,15 @@ public class PaymentServiceImpl implements PaymentService {
         if (reservation == null) {
             throw new IllegalArgumentException("Reservation cannot be null");
         }
-        long days = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
+        long days = ChronoUnit.DAYS.between(
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate()
+        );
         if (days <= 0) {
             days = 1;
         }
         double total = days * reservation.getRoom().getPrice();
+
         Invoice invoice = new Invoice(nextInvoiceId++, reservation, LocalDate.now(), total);
         invoices.add(invoice);
         return invoice;
@@ -56,13 +67,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<Payment> getPaymentsForClient(int clientId) {
-        return payments.stream()
-                .filter(p -> p.getClient() != null && p.getClient().getId() == clientId)
-                .collect(Collectors.toList());
+        // ✅ On délègue au DAO (les objets Payment sont reconstruits à partir de la BD)
+        return paymentDao.findByClientId(clientId);
     }
 
     @Override
     public double getTotalRevenue() {
-        return payments.stream().mapToDouble(Payment::getAmount).sum();
+        // ✅ Somme des montants calculée côté BD
+        return paymentDao.getTotalRevenue();
     }
 }
