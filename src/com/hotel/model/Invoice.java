@@ -2,28 +2,24 @@ package com.hotel.model;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.List;
 
-/**
- * Represents an invoice for a particular reservation.  It includes
- * details such as the reservation itself, the date of invoice
- * generation and the total amount due.  In a real application an
- * invoice might contain additional line items, taxes and so on, but
- * for the purposes of this project it is kept simple.
- */
 public class Invoice implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int id;
     private Reservation reservation;
     private LocalDate date;
-    private double total;
+    private double totalAmount;;
 
     public Invoice(int id, Reservation reservation, LocalDate date, double total) {
         this.id = id;
         this.reservation = reservation;
         this.date = date;
-        this.total = total;
+        this.totalAmount = total;
+    }
+
+    public Invoice() {
+
     }
 
     public int getId() {
@@ -50,12 +46,12 @@ public class Invoice implements Serializable {
         this.date = date;
     }
 
-    public double getTotal() {
-        return total;
+    public double getTotalAmount() {
+        return totalAmount;
     }
 
-    public void setTotal(double total) {
-        this.total = total;
+    public void setTotalAmount(double total) {
+        this.totalAmount = total;
     }
 
     @Override
@@ -64,7 +60,7 @@ public class Invoice implements Serializable {
                 "id=" + id +
                 ", reservation=" + (reservation != null ? reservation.getId() : null) +
                 ", date=" + date +
-                ", total=" + total +
+                ", total=" + totalAmount +
                 '}';
     }
 }

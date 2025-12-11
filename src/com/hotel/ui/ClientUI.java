@@ -161,7 +161,7 @@ public class ClientUI extends JFrame {
                         if (res != null) {
                             // Compute amount automatically based on invoice
                             com.hotel.model.Invoice invoice = paymentService.generateInvoice(res);
-                            Payment payment = paymentService.processPayment(res, invoice.getTotal());
+                            Payment payment = paymentService.processPayment(res, invoice.getTotalAmount());
                             JOptionPane.showMessageDialog(ClientUI.this, "Payment successful. Payment ID: " + payment.getId(), "Success", JOptionPane.INFORMATION_MESSAGE);
                             refreshMyReservations();
                         }
@@ -191,7 +191,7 @@ public class ClientUI extends JFrame {
                         }
                         if (res != null) {
                             com.hotel.model.Invoice invoice = paymentService.generateInvoice(res);
-                            JOptionPane.showMessageDialog(ClientUI.this, String.format("Invoice:\nReservation ID: %d\nTotal: %.2f", res.getId(), invoice.getTotal()), "Invoice", JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.showMessageDialog(ClientUI.this, String.format("Invoice:\nReservation ID: %d\nTotal: %.2f", res.getId(), invoice.getTotalAmount()), "Invoice", JOptionPane.INFORMATION_MESSAGE);
                         }
                     } catch (RemoteException ex) {
                         JOptionPane.showMessageDialog(ClientUI.this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

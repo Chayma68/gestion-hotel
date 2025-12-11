@@ -211,7 +211,7 @@ public class PaymentPanel extends JPanel {
                 public void actionPerformed(ActionEvent e) {
                     Reservation res = (Reservation) reservationCombo.getSelectedItem();
                     com.hotel.model.Invoice invoice = paymentService.generateInvoice(res);
-                    JOptionPane.showMessageDialog(dialog, String.format("Invoice generated:\nReservation ID: %d\nClient: %s\nTotal: %.2f", res.getId(), res.getClient().getName(), invoice.getTotal()), "Invoice", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, String.format("Invoice generated:\nReservation ID: %d\nClient: %s\nTotal: %.2f", res.getId(), res.getClient().getName(), invoice.getTotalAmount()), "Invoice", JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                 }
             });
