@@ -7,16 +7,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Panel allowing employees to manage hotel rooms.  Users can add new
- * rooms, edit existing room details (type and price) and delete
- * rooms.  A JTable displays all rooms and reflects changes in
- * real time after each operation.
- */
 public class RoomManagementPanel extends JPanel {
     private final HotelService hotelService;
     private JTable table;
@@ -31,8 +24,7 @@ public class RoomManagementPanel extends JPanel {
     private void initialiseUI() {
         setLayout(new BorderLayout());
 
-        // Table model and table
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Type", "Price", "Available"}, 0) {
+        tableModel = new DefaultTableModel(new Object[]{"ID", "Number", "Type", "Price", "Available"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -56,119 +48,154 @@ public class RoomManagementPanel extends JPanel {
         add(buttonsPanel, BorderLayout.SOUTH);
 
         // Button actions
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showRoomDialog(null);
+        addButton.addActionListener(e -> showRoomDialog(null));
+
+        editButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                try {
+                    int roomId = (int) tableModel.getValueAt(selectedRow, 0);
+                    List<Room> rooms = hotelService.getAllRooms();
+                    for (Room r : rooms) {
+                        if (r.getId() == roomId) {
+                            showRoomDialog(r);
+                            break;
+                        }
+                    }
+                } catch (RemoteException ex) {
+                    JOptionPane.showMessageDialog(RoomManagementPanel.this,
+                            "Error: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(RoomManagementPanel.this,
+                        "Please select a room to edit.",
+                        "Information",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
-        editButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow >= 0) {
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                int confirm = JOptionPane.showConfirmDialog(RoomManagementPanel.this,
+                        "Are you sure you want to delete this room?",
+                        "Confirm",
+                        JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
                     try {
                         int roomId = (int) tableModel.getValueAt(selectedRow, 0);
-                        // Find the room from the service
-                        List<Room> rooms = hotelService.getAllRooms();
-                        for (Room r : rooms) {
-                            if (r.getId() == roomId) {
-                                showRoomDialog(r);
-                                break;
-                            }
-                        }
+                        hotelService.deleteRoom(roomId);
+                        refreshTable();
                     } catch (RemoteException ex) {
-                        JOptionPane.showMessageDialog(RoomManagementPanel.this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(RoomManagementPanel.this,
+                                "Error: " + ex.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
                     }
-                } else {
-                    JOptionPane.showMessageDialog(RoomManagementPanel.this, "Please select a room to edit.", "Information", JOptionPane.INFORMATION_MESSAGE);
                 }
+            } else {
+                JOptionPane.showMessageDialog(RoomManagementPanel.this,
+                        "Please select a room to delete.",
+                        "Information",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow >= 0) {
-                    int confirm = JOptionPane.showConfirmDialog(RoomManagementPanel.this, "Are you sure you want to delete this room?", "Confirm", JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        try {
-                            int roomId = (int) tableModel.getValueAt(selectedRow, 0);
-                            hotelService.deleteRoom(roomId);
-                            refreshTable();
-                        } catch (RemoteException ex) {
-                            JOptionPane.showMessageDialog(RoomManagementPanel.this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(RoomManagementPanel.this, "Please select a room to delete.", "Information", JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
-
-        refreshButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                refreshTable();
-            }
-        });
+        refreshButton.addActionListener(e -> refreshTable());
     }
 
-    /**
-     * Populates the table with the current list of rooms from the
-     * service.
-     */
     private void refreshTable() {
         try {
             List<Room> rooms = hotelService.getAllRooms();
             tableModel.setRowCount(0);
             for (Room r : rooms) {
-                tableModel.addRow(new Object[]{r.getId(), r.getType(), r.getPrice(), r.isAvailable()});
+                tableModel.addRow(new Object[]{
+                        r.getId(),
+                        r.getNumber(),
+                        r.getType(),
+                        r.getPrice(),
+                        r.isAvailable()
+                });
             }
         } catch (RemoteException e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Error: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    /**
-     * Displays a modal dialog to add or edit a room.  When editing the
-     * provided room parameter must not be null.  When the user
-     * confirms the dialog the service is invoked accordingly and the
-     * table is refreshed.
-     *
-     * @param room room to edit or null to add a new room
-     */
     private void showRoomDialog(Room room) {
         boolean editing = room != null;
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), editing ? "Edit Room" : "Add Room", Dialog.ModalityType.APPLICATION_MODAL);
+
+        JDialog dialog = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                editing ? "Edit Room" : "Add Room",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        JLabel numberLabel = new JLabel("Number:");
+        JTextField numberField = new JTextField(10);
+
         JLabel typeLabel = new JLabel("Type:");
         JTextField typeField = new JTextField(20);
+
         JLabel priceLabel = new JLabel("Price:");
         JTextField priceField = new JTextField(20);
 
-        // Pre-fill when editing
-        if (editing) {
-            typeField.setText(room.getType());
-            priceField.setText(String.valueOf(room.getPrice()));
-        }
+        JLabel availableLabel = new JLabel("Available:");
+        JCheckBox availableCheckBox = new JCheckBox();
 
+        int row = 0;
+
+        // Number
         gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridy = row;
+        panel.add(numberLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(numberField, gbc);
+        row++;
+
+        // Type
+        gbc.gridx = 0;
+        gbc.gridy = row;
         panel.add(typeLabel, gbc);
         gbc.gridx = 1;
         panel.add(typeField, gbc);
+        row++;
+
+        // Price
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = row;
         panel.add(priceLabel, gbc);
         gbc.gridx = 1;
         panel.add(priceField, gbc);
+        row++;
+
+        // Available
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        panel.add(availableLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(availableCheckBox, gbc);
+        row++;
+
+        // Pre-fill when editing
+        if (editing) {
+            numberField.setText(room.getNumber());
+            typeField.setText(room.getType());
+            priceField.setText(String.valueOf(room.getPrice()));
+            availableCheckBox.setSelected(room.isAvailable());
+        } else {
+            availableCheckBox.setSelected(true);
+        }
 
         JButton okButton = new JButton(editing ? "Update" : "Add");
         JButton cancelButton = new JButton("Cancel");
@@ -177,41 +204,58 @@ public class RoomManagementPanel extends JPanel {
         buttonPanel.add(cancelButton);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = row;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.EAST;
         panel.add(buttonPanel, gbc);
 
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String type = typeField.getText().trim();
-                String priceText = priceField.getText().trim();
-                if (type.isEmpty() || priceText.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "Please fill all fields.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
+        okButton.addActionListener((ActionEvent e) -> {
+            String number = numberField.getText().trim();
+            String type = typeField.getText().trim();
+            String priceText = priceField.getText().trim();
+            boolean available = availableCheckBox.isSelected();
+
+            if (number.isEmpty() || type.isEmpty() || priceText.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                        "Please fill all fields.",
+                        "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            double price;
+            try {
+                price = Double.parseDouble(priceText);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                        "Invalid price value.",
+                        "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                if (editing) {
+                    room.setNumber(number);
+                    room.setType(type);
+                    room.setPrice(price);
+                    room.setAvailable(available);
+                    hotelService.updateRoom(room);
+                } else {
+                    Room newRoom = new Room();
+                    newRoom.setNumber(number);
+                    newRoom.setType(type);
+                    newRoom.setPrice(price);
+                    newRoom.setAvailable(available);
+                    hotelService.addRoom(newRoom);
                 }
-                double price;
-                try {
-                    price = Double.parseDouble(priceText);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(dialog, "Invalid price value.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                try {
-                    if (editing) {
-                        room.setType(type);
-                        room.setPrice(price);
-                        hotelService.updateRoom(room);
-                    } else {
-                        Room newRoom = new Room(0, type, price, true);
-                        hotelService.addRoom(newRoom);
-                    }
-                    refreshTable();
-                    dialog.dispose();
-                } catch (RemoteException ex) {
-                    JOptionPane.showMessageDialog(dialog, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                }
+                refreshTable();
+                dialog.dispose();
+            } catch (RemoteException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 

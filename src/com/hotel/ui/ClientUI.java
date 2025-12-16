@@ -15,25 +15,19 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-/**
- * Main application window for hotel clients.  Provides a simplified
- * interface that allows the client to search and book available
- * rooms and review their own reservations.  Clients may also
- * generate invoices and process payments from within the interface.
- */
 public class ClientUI extends JFrame {
     private final HotelService hotelService;
     private final PaymentService paymentService;
     private final ReportService reportService;
     private final User user;
 
-    // Components for available rooms
+    // Components pour les chambres dispo
     private JTable availableTable;
     private DefaultTableModel availableModel;
     private JTextField checkInField;
     private JTextField checkOutField;
 
-    // Components for my reservations
+    // Components pour mes reservations
     private JTable myResTable;
     private DefaultTableModel myResModel;
 
@@ -159,7 +153,7 @@ public class ClientUI extends JFrame {
                             }
                         }
                         if (res != null) {
-                            // Compute amount automatically based on invoice
+                            // calculer amount automatically based on invoice
                             com.hotel.model.Invoice invoice = paymentService.generateInvoice(res);
                             Payment payment = paymentService.processPayment(res, invoice.getTotalAmount());
                             JOptionPane.showMessageDialog(ClientUI.this, "Payment successful. Payment ID: " + payment.getId(), "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -243,7 +237,7 @@ public class ClientUI extends JFrame {
         if (selectedRow >= 0) {
             try {
                 int roomId = (int) availableModel.getValueAt(selectedRow, 0);
-                // find room by id
+
                 List<Room> rooms = hotelService.getAvailableRooms();
                 Room selectedRoom = null;
                 for (Room r : rooms) {
@@ -257,7 +251,7 @@ public class ClientUI extends JFrame {
                     refreshAvailableRooms();
                     return;
                 }
-                // parse dates
+
                 String checkInText = checkInField.getText().trim();
                 String checkOutText = checkOutField.getText().trim();
                 LocalDate checkIn;

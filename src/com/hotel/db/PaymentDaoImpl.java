@@ -117,7 +117,24 @@ public class PaymentDaoImpl implements PaymentDao {
 
         return result;
     }
+    @Override
+    public List<Payment> findAll() {
+        List<Payment> list = new ArrayList<>();
+        String sql = "SELECT * FROM payment";
 
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapRowToPayment(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL Payment.findAll(): " + e.getMessage(), e);
+        }
+        return list;
+    }
     @Override
     public double getTotalRevenue() {
         String sql = "SELECT COALESCE(SUM(amount), 0) AS total FROM payment";
@@ -133,5 +150,28 @@ public class PaymentDaoImpl implements PaymentDao {
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors du calcul du chiffre d'affaires", e);
         }
+    }
+    // Mapping SQL → Payment
+    private Payment mapRowToPayment(ResultSet rs) throws SQLException {
+
+        int id = rs.getInt("id");
+        int reservationId = rs.getInt("reservation_id");
+        double amount = rs.getDouble("amount");
+        LocalDate date = rs.getDate("payment_date").toLocalDate();
+        boolean paid = rs.getBoolean("paid");
+
+
+        ReservationDao reservationDao = new ReservationDaoImpl();
+        Reservation reservation = reservationDao.findById(reservationId);
+
+        Payment p = new Payment();
+        p.setId(id);
+        p.setReservation(reservation);
+        p.setClient(reservation.getClient()); // pour affichage dans la table
+        p.setAmount(amount);
+        p.setDate(date);
+        p.setPaid(paid);
+
+        return p;
     }
 }

@@ -98,13 +98,13 @@ public class HotelServiceImpl extends UnicastRemoteObject implements HotelServic
                                                     Room room,
                                                     LocalDate checkIn,
                                                     LocalDate checkOut) {
-        // Recharger la chambre depuis la BD
+
         Room managedRoom = roomDao.getRoomById(room.getId());
         if (managedRoom == null || !managedRoom.isAvailable()) {
             return null;
         }
 
-        // Marquer la chambre indisponible et sauvegarder
+
         managedRoom.setAvailable(false);
         roomDao.updateRoom(managedRoom);
 

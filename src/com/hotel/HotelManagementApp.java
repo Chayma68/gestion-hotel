@@ -1,6 +1,7 @@
 package com.hotel;
 
-import com.hotel.model.Client;
+import com.hotel.db.UserDao;
+import com.hotel.db.UserDaoImpl;
 import com.hotel.model.User;
 import com.hotel.service.ReportService;
 import com.hotel.service.ReportServiceImpl;
@@ -12,49 +13,42 @@ import com.hotel.ui.LoginFrame;
 
 import javax.swing.*;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Entry point for the hotel management application.  This class
- * instantiates the service implementations, populates a list of
- * sample users and displays the login window.  The user’s time zone
- * and locale are not explicitly set; Swing defaults are used.
- */
 
 public class HotelManagementApp {
+
     public static void main(String[] args) {
 
+        // Look & Feel
         try {
             UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-        } catch (Exception e) {
-            // Si Nimbus n'est pas dispo, on ignore et on garde le look par défaut
-        }
+        } catch (Exception ignored) { }
 
-        // Instantiate services
         try {
+            // Services
             HotelService hotelService = new HotelServiceImpl();
             PaymentService paymentService = new PaymentServiceImpl();
             ReportService reportService = new ReportServiceImpl(hotelService, paymentService);
 
-            // Create sample users
-            List<User> users = new ArrayList<>();
-            users.add(new User(1, "admin", "admin", User.Role.EMPLOYEE));
+            // DAO Users
+            UserDao userDao = new UserDaoImpl();
 
-            List<Client> clients = hotelService.getAllClients();
-            int userIdCounter = 2;
-            for (Client c : clients) {
-                String username = c.getName().toLowerCase();
-                String password = "password";
-                users.add(new User(userIdCounter++, username, password, User.Role.CLIENT, c));
+            // Seed admin si absent
+            if (userDao.findByUsername("admin") == null) {
+                userDao.save(new User(0, "admin", "admin", User.Role.EMPLOYEE));
             }
 
+            // UI
             SwingUtilities.invokeLater(() -> {
-                LoginFrame loginFrame = new LoginFrame(hotelService, paymentService, reportService, users);
+                LoginFrame loginFrame = new LoginFrame(hotelService, paymentService, reportService, userDao);
                 loginFrame.setVisible(true);
             });
+
         } catch (RemoteException e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null,
+                    "Erreur au démarrage (RMI/Service): " + e.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

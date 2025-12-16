@@ -11,12 +11,7 @@ import java.awt.event.ActionListener;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Panel that allows employees to manage clients.  Employees can add
- * new clients and search existing clients by name.  All clients are
- * displayed in a table for quick overview.  Search results are
- * presented in a simple message dialog.
- */
+
 public class ClientManagementPanel extends JPanel {
     private final HotelService hotelService;
     private JTable table;

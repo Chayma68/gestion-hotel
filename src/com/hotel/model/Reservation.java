@@ -75,15 +75,35 @@ public class Reservation implements Serializable {
         this.confirmed = confirmed;
     }
 
+
     @Override
     public String toString() {
-        return "Reservation{" +
-                "id=" + id +
-                ", client=" + (client != null ? client.getName() : null) +
-                ", room=" + (room != null ? room.getId() : 0) +
-                ", checkInDate=" + checkInDate +
-                ", checkOutDate=" + checkOutDate +
-                ", confirmed=" + confirmed +
-                '}';
+        String clientPart = (client != null)
+                ? client.getName()
+                : "Unknown client";
+
+        String roomPart;
+        if (room != null) {
+            if (room.getNumber() != null && !room.getNumber().isBlank()) {
+                roomPart = room.getNumber();
+            } else {
+                roomPart = "Room " + room.getId();  // fallback
+            }
+        } else {
+            roomPart = "No room";
+        }
+
+        String checkInPart = (checkInDate != null) ? checkInDate.toString() : "?";
+        String checkOutPart = (checkOutDate != null) ? checkOutDate.toString() : "?";
+
+        return String.format(
+                "Res #%d - %s - %s (%s → %s)",
+                id,
+                clientPart,
+                roomPart,
+                checkInPart,
+                checkOutPart
+        );
     }
+
 }

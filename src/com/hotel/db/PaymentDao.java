@@ -8,8 +8,7 @@ public interface PaymentDao {
 
 
     Payment save(Payment payment);
-
     List<Payment> findByClientId(int clientId);
-
+    List<Payment> findAll();
     double getTotalRevenue();
 }

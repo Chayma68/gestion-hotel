@@ -1,14 +1,6 @@
 package com.hotel.model;
 
 import java.io.Serializable;
-
-/**
- * Represents a user of the system.  Users may either be employees or
- * clients.  Each user has a username, password and role.  When the
- * role is CLIENT the {@link #client} field links to the underlying
- * client details.  This class is serialisable for transmission via
- * remote interfaces if required.
- */
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 

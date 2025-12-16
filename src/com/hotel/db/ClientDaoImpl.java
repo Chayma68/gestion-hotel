@@ -29,6 +29,29 @@ public class ClientDaoImpl implements ClientDao {
             throw new RuntimeException("Erreur lors de l'ajout du client", e);
         }
     }
+    @Override
+    public Client findById(int id) {
+        String sql = "SELECT * FROM client WHERE id = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Client(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("contact"),
+                            rs.getString("email")
+                    );
+                }
+            }
+            return null;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL findById client", e);
+        }
+    }
 
     @Override
     public List<Client> findAll() {

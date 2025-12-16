@@ -11,11 +11,7 @@ import java.awt.event.ActionListener;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Panel that provides a simple interface to generate various
- * reports: occupancy, revenue and client history.  The generated
- * report text is displayed in a text area for easy reading.
- */
+
 public class ReportPanel extends JPanel {
     private final HotelService hotelService;
     private final ReportService reportService;

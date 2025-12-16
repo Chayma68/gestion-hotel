@@ -60,7 +60,6 @@ public class PaymentServiceImpl implements PaymentService {
         invoice.setDate(LocalDate.now());
         invoice.setTotalAmount(total);
 
-        //  Persistance BD
         return invoiceDao.save(invoice);
     }
 

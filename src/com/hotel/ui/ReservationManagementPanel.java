@@ -15,12 +15,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-/**
- * Panel that allows employees to manage reservations.  Employees can
- * create new reservations, confirm pending reservations and cancel
- * existing reservations.  A table provides an overview of all
- * reservations.
- */
 public class ReservationManagementPanel extends JPanel {
     private final HotelService hotelService;
     private JTable table;

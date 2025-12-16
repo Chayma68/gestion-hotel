@@ -31,7 +31,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public String generateOccupancyReport() {
-        // Rooms depuis la BD
+
         List<Room> rooms = roomDao.getAllRooms();
         List<Room> available = roomDao.getAvailableRooms();
 
@@ -52,7 +52,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public String generateRevenueReport() {
-        // Total revenu calculé côté BD via PaymentDao
+
         double revenue = paymentDao.getTotalRevenue();
         return String.format("Revenue Report:\nTotal revenue: %.2f", revenue);
     }
@@ -70,7 +70,6 @@ public class ReportServiceImpl implements ReportService {
                 .append(client.getId())
                 .append(")\n");
 
-        //  Réservations récupérées depuis la BD
         List<Reservation> reservations = reservationDao.findAll();
 
         List<Reservation> clientReservations = reservations.stream()

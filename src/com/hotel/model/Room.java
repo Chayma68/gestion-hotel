@@ -5,12 +5,11 @@ import java.io.Serializable;
 public class Room implements Serializable {
 
     private int id;
-    private String number;   // numéro de chambre
+    private String number;
     private String type;
     private double price;
     private boolean available;
 
-    //  constructeur vide utilisé par le DAO
     public Room() {
     }
     public Room(int id, String type, double price, boolean available) {
@@ -18,10 +17,10 @@ public class Room implements Serializable {
         this.type = type;
         this.price = price;
         this.available = available;
-        this.number = null; // ou auto-généré, comme tu veux
+        this.number = null;
     }
 
-    //  constructeur complet pour l'utiliser ailleurs
+
     public Room(int id, String number, String type, double price, boolean available) {
         this.id = id;
         this.number = number;
@@ -29,8 +28,6 @@ public class Room implements Serializable {
         this.price = price;
         this.available = available;
     }
-
-    // --- getters / setters ---
 
     public int getId() {
         return id;
